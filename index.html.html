@@ -1,0 +1,617 @@
+
+<h2 class="sr-only">ระบบบริหารจัดการหลักสูตรพยาบาลศาสตร์ ปีการศึกษา 2569 — แดชบอร์ด บันทึกข้อมูล PLO mapping และติดตาม มคอ.</h2>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body,input,select,textarea,button{font-family:var(--font-sans)}
+.nav{display:flex;gap:2px;border-bottom:1.5px solid var(--color-border-tertiary);margin-bottom:18px;overflow-x:auto}
+.nav-btn{background:none;border:none;border-bottom:2.5px solid transparent;cursor:pointer;font-size:12px;font-weight:500;padding:10px 14px;color:var(--color-text-secondary);white-space:nowrap;transition:all .15s;margin-bottom:-1.5px}
+.nav-btn.on{color:#185FA5;border-bottom-color:#185FA5}
+.nav-btn:hover:not(.on){color:var(--color-text-primary);background:var(--color-background-secondary)}
+.kcard{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:14px 16px}
+.kcard-accent{border-top:3px solid var(--accent-color)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px 16px}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:500}
+.b-blue{background:#E6F1FB;color:#0C447C}.b-green{background:#EAF3DE;color:#27500A}.b-amber{background:#FAEEDA;color:#633806}.b-red{background:#FCEBEB;color:#791F1F}.b-purple{background:#EEEDFE;color:#3C3489}.b-teal{background:#E1F5EE;color:#085041}.b-coral{background:#FAECE7;color:#712B13}
+.b-done{background:#EAF3DE;color:#27500A}.b-pend{background:#FAEEDA;color:#633806}.b-sent{background:#E6F1FB;color:#0C447C}
+.pbar-wrap{height:6px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden;margin-top:6px}
+.pbar-fill{height:100%;border-radius:3px}
+.inp{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:7px 11px;color:var(--color-text-primary);font-size:13px;width:100%;outline:none}
+.inp:focus{border-color:#378ADD}
+.btn{border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;font-size:12px;font-weight:500;padding:7px 13px;background:var(--color-background-primary);color:var(--color-text-primary);transition:all .15s}
+.btn:hover{background:var(--color-background-secondary)}
+.btn-blue{background:#185FA5;color:#E6F1FB;border-color:#185FA5}.btn-blue:hover{background:#0C447C}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-del{background:#FCEBEB;color:#791F1F;border-color:#F09595}.btn-del:hover{background:#F7C1C1}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{padding:9px 10px;text-align:left;font-size:11px;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary)}
+.tbl td{padding:9px 10px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.tbl tr:hover td{background:var(--color-background-secondary)}
+.ftag{background:none;border:0.5px solid var(--color-border-secondary);border-radius:999px;padding:4px 11px;font-size:11px;cursor:pointer;color:var(--color-text-secondary);font-family:var(--font-sans);transition:all .15s}
+.ftag.on{background:#185FA5;border-color:#185FA5;color:#E6F1FB;font-weight:500}
+.row-box{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:12px;margin-bottom:10px}
+.plo-inp{width:54px;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:6px;padding:4px 5px;color:var(--color-text-primary);font-size:11px;text-align:center;font-family:var(--font-sans);outline:none}
+.plo-inp:focus{border-color:#378ADD}
+.heat-cell{width:38px;height:30px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;cursor:default}
+.lbl{font-size:10px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.section-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:12px}
+.mco-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:500}
+</style>
+
+<div id="app" style="padding:4px 0;min-height:500px"></div>
+
+<script>
+const SUBJ=[{no:1,yr:1,sem:1,code:"GE 101",name:"ภาษาไทยเชิงวิชาการ",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:60,ins:"อ.สุธาสีนี"},{no:2,yr:1,sem:1,code:"GE 209",name:"พลเมืองวิวัฒน์",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:60,ins:"อ.สุธิดา"},{no:3,yr:1,sem:1,code:"GE 302",name:"การรู้ดิจิทัล",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:60,ins:"ผศ.ศราวุธ"},{no:4,yr:1,sem:1,code:"GE 301",name:"ผู้ประกอบการในยุคดิจิทัล",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:60,ins:"อ.จิราพร"},{no:5,yr:1,sem:1,code:"0114300102",name:"กายวิภาคศาสตร์และสรีรวิทยา",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:60,ins:"ผศ.ดร.ฐิตาพร"},{no:6,yr:1,sem:1,code:"0114300035",name:"วิชาเลือกเสรี 1: พัฒนาบุคลิกภาพฯ",cred:"2(2-0-4)",tb:30,tl:30,p:0,ss:60,ins:"อ.อุมาพร"},{no:7,yr:2,sem:1,code:"GE 103",name:"ภาษาอังกฤษเชิงวิชาการ",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:60,ins:"ผศ.ดร.ดาราวรรณ"},{no:8,yr:2,sem:1,code:"0114300205",name:"เภสัชวิทยา",cred:"2(2-0-4)",tb:30,tl:0,p:0,ss:30,ins:"อ.เสาวลักษณ์"},{no:9,yr:2,sem:1,code:"0114300206",name:"พยาธิสรีรวิทยา",cred:"3(3-0-6)",tb:45,tl:0,p:0,ss:45,ins:"อ.ลัดดา"},{no:10,yr:2,sem:1,code:"0114300207",name:"กฎหมาย จริยศาสตร์และจรรยาบรรณฯ",cred:"2(2-0-4)",tb:30,tl:0,p:0,ss:30,ins:"อ.วีรวรรณ"},{no:11,yr:2,sem:1,code:"0114300208",name:"มโนมติ ทฤษฎี และกระบวนการพยาบาล",cred:"2(1-2-3)",tb:15,tl:30,p:0,ss:45,ins:"อ.ปนิดา"},{no:12,yr:2,sem:1,code:"0114300209",name:"การพยาบาลขั้นพื้นฐาน",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:60,ins:"อ.ณชา"},{no:13,yr:2,sem:1,code:"0114300036",name:"วิชาเลือกเสรี 2: พืชสมุนไพร",cred:"2(2-0-4)",tb:30,tl:0,p:0,ss:30,ins:"อ.ชุลีพร"},{no:14,yr:3,sem:1,code:"0114300313",name:"การพยาบาลสุขภาพชุมชน",cred:"2(1-2-3)",tb:15,tl:30,p:0,ss:45,ins:"อ.ปิยรัตน์"},{no:15,yr:3,sem:1,code:"0114300314",name:"การพยาบาลผู้ใหญ่และผู้สูงอายุ 2",cred:"2(1-2-3)",tb:15,tl:30,p:0,ss:45,ins:"อ.เนตรนภา"},{no:16,yr:3,sem:1,code:"0114300315",name:"วิจัยและนวัตกรรมทางการพยาบาล",cred:"3(1-4-4)",tb:15,tl:60,p:0,ss:75,ins:"ผศ.ดร.รุ่งนภา"},{no:17,yr:3,sem:1,code:"0114300316",name:"การพยาบาลมารดา ทารกฯ 1",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:60,ins:"อ.ลลิตวดี"},{no:18,yr:3,sem:1,code:"0114300317",name:"การพยาบาลสุขภาพจิตและจิตเวช",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:60,ins:"อ.ผกาสรณ์"},{no:19,yr:3,sem:1,code:"0114300038",name:"วิชาเลือกเสรี 3: ศึกษาอิสระ",cred:"2(0-4-2)",tb:0,tl:60,p:0,ss:60,ins:"ผศ.วัจมัย"},{no:20,yr:3,sem:1,code:"0114300325",name:"ปฏิบัติการพยาบาลเด็กและวัยรุ่น 2",cred:"2(0-6-2)",tb:0,tl:0,p:90,ss:30,ins:"อ.รัชฎาภรณ์"},{no:21,yr:3,sem:1,code:"0114300330",name:"ปฏิบัติการพยาบาลผู้สูงอายุ",cred:"2(0-6-2)",tb:0,tl:0,p:90,ss:30,ins:"อ.ฉันทนา"},{no:22,yr:4,sem:1,code:"GE 105",name:"ภาษาอังกฤษก้าวหน้า",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:60,ins:"อ.รพีพรรณ"},{no:23,yr:4,sem:1,code:"0114300418",name:"การพยาบาลมารดา ทารก ฯ 2",cred:"3(3-0-6)",tb:45,tl:0,p:0,ss:45,ins:"อ.ดร.พนิดา"},{no:24,yr:4,sem:1,code:"0114300419",name:"การพยาบาลและการบริหารจัดการสุขภาวะชุมชน",cred:"2(1-2-3)",tb:15,tl:30,p:0,ss:45,ins:"อ.โศรตรีย์"},{no:25,yr:4,sem:1,code:"0114300420",name:"การรักษาโรคเบื้องต้นสำหรับพยาบาล",cred:"2(1-2-3)",tb:15,tl:30,p:0,ss:45,ins:"อ.สุธาสินี"},{no:26,yr:4,sem:1,code:"0114300421",name:"การบริหารและการจัดการคุณภาพทางการพยาบาล",cred:"2(1-2-3)",tb:15,tl:30,p:0,ss:45,ins:"ผศ.วรรณดี"},{no:27,yr:1,sem:2,code:"GE 102",name:"ภาษาอังกฤษเพื่อการสื่อสาร",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:75,ins:"อ.ดร.รวิวรรณ"},{no:28,yr:1,sem:2,code:"GE 201",name:"เราคือ สบช.",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:75,ins:"ผศ.ดร.มัฏฐวรรณ"},{no:29,yr:1,sem:2,code:"GE 305",name:"วิทยาศาสตร์และคณิตศาสตร์ฯ",cred:"3(3-0-6)",tb:45,tl:0,p:0,ss:90,ins:"อ.อำนวย"},{no:30,yr:1,sem:2,code:"0114300101",name:"จุลชีววิทยาและปรสิตวิทยา",cred:"2(2-0-4)",tb:30,tl:0,p:0,ss:60,ins:"อ.ผกาสรณ์"},{no:31,yr:1,sem:2,code:"0114300103",name:"ชีวเคมีและโภชนศาสตร์",cred:"3(3-0-6)",tb:45,tl:0,p:0,ss:90,ins:"อ.ธนิดา"},{no:32,yr:1,sem:2,code:"0114300104",name:"จิตวิทยาพัฒนาการและกระบวนการคิด",cred:"2(1-2-3)",tb:15,tl:30,p:0,ss:45,ins:"อ.ญาณิศา"},{no:33,yr:2,sem:2,code:"GE 104",name:"ภาษาอังกฤษเพื่อการอ่านและการเขียนฯ",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:75,ins:"อ.ขวัญตา"},{no:34,yr:2,sem:2,code:"0114300210",name:"การพยาบาลผู้ใหญ่และผู้สูงอายุ 1",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:75,ins:"ผศ.ดร.ดาราวรรณ"},{no:35,yr:2,sem:2,code:"0114300211",name:"การพยาบาลผู้สูงอายุ",cred:"2(1-2-3)",tb:15,tl:30,p:0,ss:45,ins:"อ.ดร.จีราพร"},{no:36,yr:2,sem:2,code:"0114300212",name:"การพยาบาลเด็กและวัยรุ่น",cred:"3(2-2-5)",tb:30,tl:30,p:0,ss:75,ins:"อ.ดร.กิจติยา"},{no:37,yr:2,sem:2,code:"114300222",name:"ปฏิบัติการพยาบาลขั้นพื้นฐาน",cred:"4(0-12-4)",tb:0,tl:0,p:180,ss:60,ins:"อ.กฤติยา"},{no:38,yr:3,sem:2,code:"0114300327",name:"ปฏิบัติการพยาบาลผู้ใหญ่ฯ 2",cred:"3(0-9-3)",tb:0,tl:0,p:135,ss:45,ins:"อ.วรินทร"},{no:39,yr:3,sem:2,code:"0114300326",name:"ปฏิบัติการพยาบาลสุขภาพชุมชน",cred:"3(0-9-3)",tb:0,tl:0,p:135,ss:45,ins:"อ.ดร.รสติกร"},{no:40,yr:4,sem:2,code:"0114300431",name:"ปฏิบัติการพยาบาลมารดา ทารก ฯ 2",cred:"3(0-9-3)",tb:0,tl:0,p:135,ss:45,ins:"อ.นุจเรศ"},{no:41,yr:4,sem:2,code:"0114300432",name:"ปฏิบัติการพยาบาลฯ ชุมชน",cred:"3(0-9-3)",tb:0,tl:0,p:135,ss:45,ins:"อ.ชุลีพร"},{no:42,yr:4,sem:2,code:"0114300433",name:"ปฏิบัติการรักษาโรคเบื้องต้นฯ",cred:"3(0-9-3)",tb:0,tl:0,p:135,ss:45,ins:"อ.ปิยะดา"},{no:43,yr:4,sem:2,code:"0114300434",name:"ปฏิบัติการบริหารและการจัดการคุณภาพฯ",cred:"2(0-6-2)",tb:0,tl:0,p:90,ss:30,ins:"อ.ณชา"}];
+const METHODS=["การบรรยาย (Lecture)","การเรียนรู้โดยใช้ปัญหา (PBL)","การเรียนรู้โดยใช้กรณีศึกษา (CBL)","การเรียนรู้ตามสภาพจริง (Authentic)","การเรียนรู้โดยใช้โครงการ (PjBL)","การเรียนรู้โดยใช้เทคโนโลยีเสริม","การเรียนรู้แบบร่วมมือ (Cooperative)","ห้องเรียนกลับด้าน (Flipped)","การสะท้อนคิด (Reflection)","การเรียนรู้แบบแผนผังความคิด","การใช้ทักษะ Simulation","การฝึกปฏิบัติการพยาบาล","การประชุมปรึกษาทางการพยาบาล","การเรียนรู้ด้วยตนเอง","อื่นๆ"];
+const ASSESS=["การสอบ (Exam)","การสอบ MCQ","การสอบ EQ","ประเมินชิ้นงาน","ประเมินรายงาน","ประเมินการนำเสนอ","ประเมินกระบวนการกลุ่ม","ประเมินการสะท้อนคิด","ประเมินทักษะปฏิบัติการพยาบาล","ประเมินรายงานกรณีศึกษา","ประเมินโครงการ","อื่นๆ"];
+const PC=['#185FA5','#1D9E75','#BA7517','#A32D2D','#534AB7','#0F6E56','#854F0B','#993C1D','#72243E','#3B6D11'];
+const PCL=['#E6F1FB','#E1F5EE','#FAEEDA','#FCEBEB','#EEEDFE','#E1F5EE','#FAEEDA','#FAECE7','#FBEAF0','#EAF3DE'];
+const YR_C=['#185FA5','#1D9E75','#BA7517','#A32D2D'];
+const YR_BG=['#E6F1FB','#E1F5EE','#FAEEDA','#FCEBEB'];
+const YR_TEXT=['#0C447C','#085041','#633806','#791F1F'];
+
+let pg='dash', recs={}, editNo=null, formRows=[], fY=0,fS=0,fSt='all',fQ='', addMode=false;
+let charts={};
+const API_URL = "https://script.google.com/macros/s/AKfycbxqyCodTjOsew3hrpI7uM5PHPhDZRw3_nv_nPdJ_jde9PuNliFhVwgz_3PJxyFnhIExPQ/exec"; // ⭐ เพิ่ม
+// ⭐ เพิ่มใหม่ทั้งหมด
+async function loadData(){
+  const res = await fetch(API_URL);
+  const data = await res.json();
+
+  recs = {};
+  data.forEach(item=>{
+    recs[item.id] = item.data;
+  });
+}
+
+async function saveData(data){
+  await fetch(API_URL,{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify(data)
+  });
+}
+async function init(){
+  await loadData();   // ⭐ โหลดจาก Google Sheet
+  render();
+}
+
+async function persist(){
+  await saveData(recs);   // ⭐ บันทึกไป Google Sheet
+}
+
+function isDone(no){return!!recs[no]}
+function newRow(){return{method:'',assessment:'',pct:'',plo:Array(10).fill(null).map(()=>({clo:'',pct:''})),inTime:false,outTime:false,outHours:''}}
+function yrBadge(yr){return`<span class="badge" style="background:${YR_BG[yr-1]};color:${YR_TEXT[yr-1]}">ปี ${yr}</span>`}
+
+function render(){
+  destroyCharts();
+  const app=document.getElementById('app');
+  const pages={dash:renderDash,courses:renderCourses,manage:renderManage,mapping:renderMapping,plan:renderPlan,mco:renderMco,report:renderReport};
+  const MENU=[{id:'dash',label:'แดชบอร์ด'},{id:'courses',label:'รายวิชาทั้งหมด'},{id:'manage',label:'จัดการข้อมูล'},{id:'mapping',label:'CLO → PLO Mapping'},{id:'plan',label:'แผนการสอน'},{id:'mco',label:'ส่ง มคอ.'},{id:'report',label:'บทสรุปผู้บริหาร'}];
+  const nav=`<div class="nav">${MENU.map(m=>`<button class="nav-btn ${pg===m.id?'on':''}" onclick="go('${m.id}')">${m.label}</button>`).join('')}</div>`;
+  app.innerHTML=nav+(pages[pg]?pages[pg]():'');
+  attachCharts();
+}
+
+function destroyCharts(){Object.values(charts).forEach(c=>{try{c.destroy();}catch(e){}});charts={};}
+
+function go(p){pg=p;addMode=false;editNo=null;render();}
+function goEdit(no){pg='manage';editNo=no;addMode=false;const rec=recs[no];formRows=rec?JSON.parse(JSON.stringify(rec.rows)):[newRow()];render();}
+function goAdd(){pg='manage';editNo=null;addMode=true;formRows=[newRow()];render();}
+
+function renderDash(){
+  const done=SUBJ.filter(s=>isDone(s.no)).length;
+  const total=SUBJ.length;
+  const pct=Math.round(done/total*100);
+  const ploTot=Array(10).fill(0);
+  Object.values(recs).forEach(r=>r.rows.forEach(row=>row.plo.forEach((p,i)=>ploTot[i]+=parseFloat(p.pct)||0)));
+  const maxPlo=Math.max(...ploTot,1);
+  const tbTot=SUBJ.reduce((a,s)=>a+s.tb,0);
+  const tlTot=SUBJ.reduce((a,s)=>a+s.tl,0);
+  const pTot=SUBJ.reduce((a,s)=>a+s.p,0);
+  const yrData=[1,2,3,4].map(yr=>({yr,tot:SUBJ.filter(s=>s.yr===yr).length,done:SUBJ.filter(s=>s.yr===yr&&isDone(s.no)).length}));
+
+  return `
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div>
+      <div style="font-size:11px;color:var(--color-text-secondary);letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px">ระบบบริหารหลักสูตรพยาบาลศาสตร์</div>
+      <div style="font-size:16px;font-weight:500;color:var(--color-text-primary)">แดชบอร์ดภาพรวม ปีการศึกษา 2569</div>
+    </div>
+    <span class="badge b-blue" style="font-size:12px;padding:4px 12px">วิทยาลัยพยาบาล</span>
+  </div>
+
+  <div class="grid4" style="margin-bottom:16px">
+    ${[
+      {l:'รายวิชาทั้งหมด',v:total,c:'#185FA5',bg:'#E6F1FB',tc:'#0C447C',sub:'วิชา'},
+      {l:'กรอกข้อมูลแล้ว',v:done,c:'#1D9E75',bg:'#E1F5EE',tc:'#085041',sub:pct+'% ของทั้งหมด'},
+      {l:'รอกรอกข้อมูล',v:total-done,c:'#BA7517',bg:'#FAEEDA',tc:'#633806',sub:'วิชา'},
+      {l:'ชั่วโมงรวม',v:(tbTot+tlTot+pTot).toLocaleString(),c:'#534AB7',bg:'#EEEDFE',tc:'#3C3489',sub:'ชั่วโมง/ภาค'},
+    ].map(k=>`<div style="background:${k.bg};border-radius:var(--border-radius-md);padding:14px 16px;border-top:3px solid ${k.c}">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:${k.c};font-weight:500;margin-bottom:6px">${k.l}</div>
+      <div style="font-size:24px;font-weight:500;color:${k.tc}">${k.v}</div>
+      <div style="font-size:11px;color:${k.c};margin-top:2px">${k.sub}</div>
+    </div>`).join('')}
+  </div>
+
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="section-title">ความคืบหน้าแยกตามชั้นปี</div>
+      ${yrData.map(d=>{
+        const p2=d.tot?Math.round(d.done/d.tot*100):0;
+        return`<div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span style="font-size:12px;display:flex;align-items:center;gap:6px">${yrBadge(d.yr)} <span style="color:var(--color-text-secondary)">${d.done}/${d.tot} วิชา</span></span>
+            <span style="font-size:12px;font-weight:500;color:${YR_C[d.yr-1]}">${p2}%</span>
+          </div>
+          <div class="pbar-wrap"><div class="pbar-fill" style="width:${p2}%;background:${YR_C[d.yr-1]}"></div></div>
+        </div>`;
+      }).join('')}
+      <div style="margin-top:14px;border-top:0.5px solid var(--color-border-tertiary);padding-top:10px">
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:6px">สัดส่วนชั่วโมงการสอน</div>
+        <div style="display:flex;gap:0;height:18px;border-radius:999px;overflow:hidden">
+          ${[[tbTot,'#185FA5'],[tlTot,'#1D9E75'],[pTot,'#BA7517']].filter(x=>x[0]>0).map(([v,c])=>`<div style="width:${Math.round(v/(tbTot+tlTot+pTot)*100)}%;background:${c}"></div>`).join('')}
+        </div>
+        <div style="display:flex;gap:12px;margin-top:6px">
+          ${[['บรรยาย',tbTot,'#185FA5'],['ปฏิบัติการ',tlTot,'#1D9E75'],['ฝึกปฏิบัติ',pTot,'#BA7517']].map(([l,v,c])=>`<span style="font-size:11px;color:var(--color-text-secondary);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:${c};display:inline-block"></span>${l} ${v}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">ความครอบคลุม PLO (คะแนนรวมที่บันทึก)</div>
+      ${ploTot.map((v,i)=>`<div style="display:grid;grid-template-columns:44px 1fr 48px;align-items:center;gap:8px;margin-bottom:7px">
+        <span style="font-size:11px;font-weight:500;color:${PC[i]}">PLO${i+1}</span>
+        <div class="pbar-wrap" style="height:10px"><div class="pbar-fill" style="width:${Math.round(v/maxPlo*100)}%;background:${PC[i]}"></div></div>
+        <span style="font-size:11px;color:var(--color-text-secondary);text-align:right">${Math.round(v)}</span>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="section-title">สรุปสถานะรายชั้นปี</div>
+    <div style="overflow-x:auto"><table class="tbl" style="min-width:500px">
+      <thead><tr><th>ชั้นปี</th><th>ภาค 1</th><th>ภาค 2</th><th>รวม</th><th>กรอกแล้ว</th><th>รอกรอก</th><th>%</th></tr></thead>
+      <tbody>${[1,2,3,4].map(yr=>{
+        const s1=SUBJ.filter(s=>s.yr===yr&&s.sem===1);
+        const s2=SUBJ.filter(s=>s.yr===yr&&s.sem===2);
+        const tot=s1.length+s2.length;
+        const dn=SUBJ.filter(s=>s.yr===yr&&isDone(s.no)).length;
+        const p2=tot?Math.round(dn/tot*100):0;
+        return`<tr><td>${yrBadge(yr)}</td><td>${s1.length}</td><td>${s2.length}</td><td style="font-weight:500">${tot}</td>
+          <td><span class="badge b-green">${dn}</span></td>
+          <td><span class="badge b-amber">${tot-dn}</span></td>
+          <td style="font-weight:500;color:${p2>60?'#1D9E75':p2>30?'#BA7517':'#A32D2D'}">${p2}%</td></tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn btn-blue" onclick="go('manage')">+ กรอกข้อมูลวิชาใหม่</button>
+    <button class="btn" onclick="go('report')">ดูบทสรุปผู้บริหาร</button>
+    <button class="btn" onclick="sendPrompt('ช่วยวิเคราะห์ข้อมูลการออกแบบการเรียนการสอนและสรุปจุดที่ต้องปรับปรุง ↗')">วิเคราะห์และให้คำแนะนำ ↗</button>
+  </div>`;
+}
+
+function renderCourses(){
+  const filt=SUBJ.filter(s=>{
+    if(fY&&s.yr!==fY)return false;
+    if(fS&&s.sem!==fS)return false;
+    if(fSt==='done'&&!isDone(s.no))return false;
+    if(fSt==='pending'&&isDone(s.no))return false;
+    if(fQ&&!s.name.includes(fQ)&&!s.code.toLowerCase().includes(fQ.toLowerCase())&&!s.ins.includes(fQ))return false;
+    return true;
+  });
+  return`
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+    <input class="inp" placeholder="ค้นหาวิชา / รหัส / อาจารย์" value="${fQ}" oninput="setQ(this.value)" style="width:220px">
+    ${[0,1,2,3,4].map(y=>`<button class="ftag ${fY===y?'on':''}" onclick="setFY(${y})">${y===0?'ทุกปี':'ปี '+y}</button>`).join('')}
+    ${[0,1,2].map(s=>`<button class="ftag ${fS===s?'on':''}" onclick="setFS(${s})">${s===0?'ทุกภาค':'ภาค '+s}</button>`).join('')}
+    <button class="ftag ${fSt==='all'?'on':''}" onclick="setFSt('all')">ทั้งหมด</button>
+    <button class="ftag ${fSt==='done'?'on':''}" onclick="setFSt('done')">กรอกแล้ว</button>
+    <button class="ftag ${fSt==='pending'?'on':''}" onclick="setFSt('pending')">รอกรอก</button>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th style="width:40px">#</th><th>รหัสวิชา</th><th>ชื่อวิชา</th><th>หน่วยกิต</th><th>ปี/ภาค</th><th>อาจารย์</th><th>ทบ/ทล/ป</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+      <tbody>${filt.map((s,i)=>{
+        const dn=isDone(s.no);
+        const rec=recs[s.no];
+        const rows=rec?rec.rows.length:0;
+        return`<tr>
+          <td style="color:var(--color-text-secondary);font-size:11px">${i+1}</td>
+          <td style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">${s.code}</td>
+          <td style="max-width:200px;font-size:12px">${s.name}</td>
+          <td style="font-size:11px;color:var(--color-text-secondary)">${s.cred}</td>
+          <td>${yrBadge(s.yr)} <span style="font-size:10px;color:var(--color-text-secondary)">ภ${s.sem}</span></td>
+          <td style="font-size:11px;color:var(--color-text-secondary)">${s.ins}</td>
+          <td style="font-size:11px;color:var(--color-text-secondary)">${s.tb}/${s.tl}/${s.p}</td>
+          <td>${dn?`<span class="badge b-done">${rows} แถว</span>`:'<span class="badge b-amber">รอกรอก</span>'}</td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-sm ${dn?'':'btn-blue'}" onclick="goEdit(${s.no})">${dn?'แก้ไข':'กรอก'}</button>
+            ${dn?`<button class="btn btn-sm btn-del" onclick="del(${s.no})" style="margin-left:4px">ลบ</button>`:''}
+          </td></tr>`;
+      }).join('')}${filt.length===0?`<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--color-text-secondary)">ไม่พบรายวิชา</td></tr>`:''}
+      </tbody>
+    </table></div>
+  </div>
+  <div style="font-size:11px;color:var(--color-text-secondary);margin-top:8px;text-align:right">แสดง ${filt.length}/${SUBJ.length} วิชา</div>`;
+}
+
+function renderManage(){
+  if(addMode){
+    return`<div class="card" style="margin-bottom:14px">
+      <div class="section-title">เพิ่มรายวิชาใหม่</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        ${[['code','รหัสวิชา'],['name','ชื่อวิชา'],['cred','หน่วยกิต (เช่น 3(2-2-5))'],['ins','อาจารย์ผู้รับผิดชอบ']].map(([k,l])=>`<div><div class="lbl">${l}</div><input class="inp" id="nf_${k}" placeholder="${l}"></div>`).join('')}
+        ${[['yr','ชั้นปี (1-4)'],['sem','ภาคเรียน (1-2)'],['tb','ทบ. (บรรยาย)'],['tl','ทล. (ปฏิบัติ)'],['p','ป. (ฝึกปฏิบัติ)'],['ss','SS']].map(([k,l])=>`<div><div class="lbl">${l}</div><input class="inp" id="nf_${k}" type="number" min="0" placeholder="0"></div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-blue" onclick="saveNew()">บันทึกรายวิชา</button>
+        <button class="btn" onclick="addMode=false;render()">ยกเลิก</button>
+      </div>
+    </div>`;
+  }
+  if(editNo!==null){
+    const s=SUBJ.find(x=>x.no===editNo);
+    if(!s)return'';
+    const totPct=formRows.reduce((a,r)=>a+(parseFloat(r.pct)||0),0);
+    const ploTot=Array(10).fill(0);
+    formRows.forEach(r=>r.plo.forEach((p,i)=>ploTot[i]+=parseFloat(p.pct)||0));
+    return`
+    <div style="background:#E6F1FB;border-radius:var(--border-radius-lg);padding:12px 16px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:16px;align-items:center">
+      <div><div style="font-size:10px;color:#185FA5;text-transform:uppercase;letter-spacing:.5px">รหัส</div><div style="font-size:15px;font-weight:500;color:#0C447C;font-family:var(--font-mono)">${s.code}</div></div>
+      <div style="flex:1;min-width:140px"><div style="font-size:10px;color:#185FA5;text-transform:uppercase;letter-spacing:.5px">ชื่อวิชา</div><div style="font-size:14px;font-weight:500;color:#042C53">${s.name}</div></div>
+      ${[['หน่วยกิต',s.cred],['ทบ.',s.tb],['ทล.',s.tl],['ป.',s.p],['SS',s.ss],['อาจารย์',s.ins]].map(([k,v])=>`<div><div style="font-size:10px;color:#185FA5">${k}</div><div style="font-size:12px;font-weight:500;color:#0C447C">${v}</div></div>`).join('')}
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <div style="background:#E1F5EE;border-radius:var(--border-radius-md);padding:10px 14px">
+        <div style="font-size:10px;color:#1D9E75">รวม % ทั้งหมด</div>
+        <div style="font-size:20px;font-weight:500;color:#085041">${Math.round(totPct)}</div>
+      </div>
+      ${ploTot.map((v,i)=>v>0?`<div style="background:${PCL[i]};border-radius:var(--border-radius-md);padding:8px 12px">
+        <div style="font-size:10px;color:${PC[i]};font-weight:500">PLO${i+1}</div>
+        <div style="font-size:18px;font-weight:500;color:${PC[i]}">${Math.round(v)}</div>
+      </div>`:'').join('')}
+    </div>
+    ${formRows.map((r,ri)=>`<div class="row-box" style="border-left:2.5px solid ${PC[ri%PC.length]}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:12px;font-weight:500;color:var(--color-text-secondary)">แถวที่ ${ri+1}</span>
+        ${formRows.length>1?`<button class="btn btn-sm btn-del" onclick="rmRow(${ri})">ลบแถว</button>`:''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 88px;gap:10px;margin-bottom:10px">
+        <div><div class="lbl">วิธีการจัดการเรียนการสอน</div>
+          <select class="inp" onchange="upd(${ri},'method',this.value)">
+            <option value="">-- เลือก --</option>${METHODS.map(m=>`<option value="${m}"${r.method===m?' selected':''}>${m}</option>`).join('')}
+          </select></div>
+        <div><div class="lbl">วิธีการวัดและประเมินผล</div>
+          <select class="inp" onchange="upd(${ri},'assessment',this.value)">
+            <option value="">-- เลือก --</option>${ASSESS.map(a=>`<option value="${a}"${r.assessment===a?' selected':''}>${a}</option>`).join('')}
+          </select></div>
+        <div><div class="lbl">ร้อยละ *Cr</div>
+          <input class="inp" type="number" min="0" value="${r.pct}" oninput="upd(${ri},'pct',this.value)" style="text-align:center;font-weight:500"></div>
+      </div>
+      <div class="lbl">PLO → CLO และ %</div>
+      <div style="overflow-x:auto;margin-bottom:10px">
+        <table style="border-collapse:collapse;min-width:580px;width:100%">
+          <thead><tr>${Array.from({length:10},(_,i)=>`<th style="padding:4px;text-align:center;font-size:11px;font-weight:500;color:${PC[i]};width:10%">PLO${i+1}</th>`).join('')}</tr>
+          <tr>${Array.from({length:10},()=>`<td style="text-align:center;font-size:10px;color:var(--color-text-secondary);padding:2px">CLO | %</td>`).join('')}</tr></thead>
+          <tbody><tr>${r.plo.map((p,pi)=>`<td style="padding:3px;text-align:center">
+            <input class="plo-inp" placeholder="CLO" value="${p.clo}" oninput="updPLO(${ri},${pi},'clo',this.value)">
+            <input class="plo-inp" placeholder="%" value="${p.pct}" oninput="updPLO(${ri},${pi},'pct',this.value)" style="margin-top:3px">
+          </td>`).join('')}</tr></tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:10px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.5px">ภาระงาน:</span>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox"${r.inTime?' checked':''} onchange="upd(${ri},'inTime',this.checked)" style="accent-color:#185FA5"> ในเวลา</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox"${r.outTime?' checked':''} onchange="upd(${ri},'outTime',this.checked)" style="accent-color:#185FA5"> นอกเวลา</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:12px;color:var(--color-text-secondary)">ชั่วโมงนอกเวลา</span>
+          <input class="plo-inp" style="width:52px" type="number" min="0" value="${r.outHours}" oninput="upd(${ri},'outHours',this.value)">
+          <span style="font-size:12px;color:var(--color-text-secondary)">ชม.</span>
+        </div>
+      </div>
+    </div>`).join('')}
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">
+      <button class="btn" onclick="addRow()">+ เพิ่มแถว</button>
+      <button class="btn btn-blue" onclick="saveForm()">บันทึกข้อมูล</button>
+      <button class="btn" onclick="go('courses')">กลับรายการ</button>
+    </div>`;
+  }
+  const done=SUBJ.filter(s=>isDone(s.no)).length;
+  return`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div class="section-title" style="margin:0">จัดการข้อมูลการออกแบบการสอน</div>
+    <button class="btn btn-blue" onclick="goAdd()">+ เพิ่มรายวิชาใหม่</button>
+  </div>
+  <div class="grid4" style="margin-bottom:16px">
+    ${[['รอกรอกข้อมูล',SUBJ.length-done,'#BA7517','#FAEEDA','#633806'],['กรอกข้อมูลแล้ว',done,'#1D9E75','#E1F5EE','#085041'],].map(([l,v,c,bg,tc])=>`
+    <div style="background:${bg};border-radius:var(--border-radius-md);padding:14px 16px;border-top:3px solid ${c}">
+      <div style="font-size:10px;color:${c};text-transform:uppercase;letter-spacing:.5px;font-weight:500;margin-bottom:4px">${l}</div>
+      <div style="font-size:24px;font-weight:500;color:${tc}">${v} วิชา</div>
+    </div>`).join('')}
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>รหัสวิชา</th><th>ชื่อวิชา</th><th>ปี/ภาค</th><th>อาจารย์</th><th>สถานะ</th><th>แถว</th><th>บันทึกล่าสุด</th><th>จัดการ</th></tr></thead>
+      <tbody>${SUBJ.filter(s=>isDone(s.no)).map(s=>{
+        const rec=recs[s.no];
+        const dt=rec.savedAt?new Date(rec.savedAt).toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'-';
+        return`<tr>
+          <td style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">${s.code}</td>
+          <td style="font-size:12px">${s.name}</td>
+          <td>${yrBadge(s.yr)}</td>
+          <td style="font-size:11px;color:var(--color-text-secondary)">${s.ins}</td>
+          <td><span class="badge b-done">บันทึกแล้ว</span></td>
+          <td style="text-align:center;font-weight:500;color:#185FA5">${rec.rows.length}</td>
+          <td style="font-size:11px;color:var(--color-text-secondary)">${dt}</td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-sm" onclick="goEdit(${s.no})" style="margin-right:4px">แก้ไข</button>
+            <button class="btn btn-sm btn-del" onclick="del(${s.no})">ลบ</button>
+          </td></tr>`;
+      }).join('')}
+      ${SUBJ.filter(s=>!isDone(s.no)).slice(0,5).map(s=>`<tr>
+        <td style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">${s.code}</td>
+        <td style="font-size:12px;color:var(--color-text-secondary)">${s.name}</td>
+        <td>${yrBadge(s.yr)}</td>
+        <td style="font-size:11px;color:var(--color-text-secondary)">${s.ins}</td>
+        <td><span class="badge b-amber">รอกรอก</span></td>
+        <td style="text-align:center;color:var(--color-text-secondary)">-</td>
+        <td style="color:var(--color-text-secondary)">-</td>
+        <td><button class="btn btn-sm btn-blue" onclick="goEdit(${s.no})">กรอกข้อมูล</button></td>
+      </tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+function renderMapping(){
+  const hasDone=SUBJ.filter(s=>isDone(s.no));
+  const ploTot=Array(10).fill(0);
+  hasDone.forEach(s=>{recs[s.no].rows.forEach(r=>r.plo.forEach((p,i)=>ploTot[i]+=parseFloat(p.pct)||0));});
+  const maxV=Math.max(...ploTot,1);
+  return`
+  <div class="section-title">CLO → PLO Mapping Matrix</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+    ${Array.from({length:10},(_,i)=>`<div style="background:${PCL[i]};border-radius:var(--border-radius-md);padding:8px 12px;min-width:80px;text-align:center">
+      <div style="font-size:10px;font-weight:500;color:${PC[i]};text-transform:uppercase;letter-spacing:.5px">PLO${i+1}</div>
+      <div style="font-size:18px;font-weight:500;color:${PC[i]}">${Math.round(ploTot[i])}</div>
+      <div style="height:4px;background:${PC[i]};border-radius:2px;margin-top:4px;opacity:${Math.max(0.2,ploTot[i]/maxV).toFixed(2)}"></div>
+    </div>`).join('')}
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">
+    <div style="padding:12px 14px;border-bottom:0.5px solid var(--color-border-tertiary);font-size:13px;font-weight:500">ตาราง Heatmap รายวิชา × PLO</div>
+    <div style="overflow-x:auto"><table class="tbl" style="min-width:600px">
+      <thead><tr><th style="width:160px">วิชา</th>${Array.from({length:10},(_,i)=>`<th style="text-align:center;color:${PC[i]};min-width:50px">PLO${i+1}</th>`).join('')}</tr></thead>
+      <tbody>${hasDone.length===0?`<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--color-text-secondary)">ยังไม่มีข้อมูล</td></tr>`:hasDone.map(s=>{
+        const pt=Array(10).fill(0);
+        recs[s.no].rows.forEach(r=>r.plo.forEach((p,i)=>pt[i]+=parseFloat(p.pct)||0));
+        const rowMax=Math.max(...pt,1);
+        return`<tr><td style="font-size:11px">${yrBadge(s.yr)} ${s.name.substring(0,22)}${s.name.length>22?'…':''}</td>
+        ${pt.map((v,i)=>`<td style="text-align:center;padding:6px">
+          ${v>0?`<div class="heat-cell" style="background:${PCL[i]};color:${PC[i]};opacity:${Math.max(0.4,v/rowMax).toFixed(2)};margin:0 auto">${Math.round(v)}</div>`:'<span style="color:var(--color-text-secondary);font-size:11px">·</span>'}
+        </td>`).join('')}</tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn" onclick="sendPrompt('วิเคราะห์ผล CLO PLO mapping และบอกว่า PLO ตัวไหนยังครอบคลุมน้อยเกินไป ↗')">วิเคราะห์ช่องว่าง PLO ↗</button>
+  </div>`;
+}
+
+function renderPlan(){
+  const hasDone=SUBJ.filter(s=>isDone(s.no));
+  const methodCount={}, assessCount={};
+  Object.values(recs).forEach(r=>r.rows.forEach(row=>{
+    if(row.method){const k=row.method.replace(/\s+/g,' ').trim().substring(0,40);methodCount[k]=(methodCount[k]||0)+1;}
+    if(row.assessment){const k=row.assessment.trim().substring(0,40);assessCount[k]=(assessCount[k]||0)+1;}
+  }));
+  const topM=Object.entries(methodCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const topA=Object.entries(assessCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxM=topM[0]?topM[0][1]:1;
+  const maxA=topA[0]?topA[0][1]:1;
+  return`
+  <div class="section-title">แผนการจัดการเรียนการสอนและการวัดประเมินผล</div>
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card">
+      <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">วิธีการสอนที่ใช้</div>
+      ${topM.length===0?`<div style="color:var(--color-text-secondary);font-size:13px">ยังไม่มีข้อมูล</div>`:topM.map(([k,v])=>`<div style="display:grid;grid-template-columns:1fr 36px;align-items:center;gap:8px;margin-bottom:8px">
+        <div>
+          <div style="font-size:12px;color:var(--color-text-primary);margin-bottom:3px">${k}</div>
+          <div class="pbar-wrap"><div class="pbar-fill" style="width:${Math.round(v/maxM*100)}%;background:#185FA5"></div></div>
+        </div>
+        <span style="font-size:12px;font-weight:500;color:#185FA5;text-align:right">${v}×</span>
+      </div>`).join('')}
+    </div>
+    <div class="card">
+      <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">วิธีการประเมินผลที่ใช้</div>
+      ${topA.length===0?`<div style="color:var(--color-text-secondary);font-size:13px">ยังไม่มีข้อมูล</div>`:topA.map(([k,v])=>`<div style="display:grid;grid-template-columns:1fr 36px;align-items:center;gap:8px;margin-bottom:8px">
+        <div>
+          <div style="font-size:12px;color:var(--color-text-primary);margin-bottom:3px">${k}</div>
+          <div class="pbar-wrap"><div class="pbar-fill" style="width:${Math.round(v/maxA*100)}%;background:#1D9E75"></div></div>
+        </div>
+        <span style="font-size:12px;font-weight:500;color:#1D9E75;text-align:right">${v}×</span>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">รายวิชาพร้อมรายละเอียดแผนการสอน</div>
+    ${hasDone.length===0?`<div style="color:var(--color-text-secondary)">ยังไม่มีข้อมูล</div>`:hasDone.map(s=>{
+      const r=recs[s.no];
+      const methods=[...new Set(r.rows.filter(x=>x.method).map(x=>x.method.substring(0,30)))];
+      return`<div style="border-bottom:0.5px solid var(--color-border-tertiary);padding:10px 0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          ${yrBadge(s.yr)}<span style="font-size:13px;font-weight:500">${s.name}</span>
+          <span style="font-size:11px;color:var(--color-text-secondary)">${s.code} | ${s.ins}</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${methods.map(m=>`<span class="badge b-blue" style="font-size:10px">${m}</span>`).join('')}
+          ${r.rows.filter(x=>x.assessment).map(x=>`<span class="badge b-teal" style="font-size:10px">${x.assessment.substring(0,25)}</span>`).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function renderMco(){
+  const mcoStatus={};
+  SUBJ.forEach(s=>{
+    const dn=isDone(s.no);
+    mcoStatus[s.no]=dn?'done':'pending';
+  });
+  const sent=Object.values(mcoStatus).filter(x=>x==='done').length;
+  const pend=Object.values(mcoStatus).filter(x=>x==='pending').length;
+  return`
+  <div class="section-title">ส่งและติดตาม มคอ.3 / มคอ.5</div>
+  <div class="grid4" style="margin-bottom:16px">
+    ${[['พร้อมส่ง มคอ.',sent,'#1D9E75','#E1F5EE','#085041'],['รอกรอกข้อมูล',pend,'#BA7517','#FAEEDA','#633806'],['รายวิชาทั้งหมด',SUBJ.length,'#185FA5','#E6F1FB','#0C447C']].map(([l,v,c,bg,tc])=>`
+    <div style="background:${bg};border-radius:var(--border-radius-md);padding:14px 16px;border-top:3px solid ${c}">
+      <div style="font-size:10px;color:${c};text-transform:uppercase;letter-spacing:.5px;font-weight:500;margin-bottom:4px">${l}</div>
+      <div style="font-size:22px;font-weight:500;color:${tc}">${v}</div>
+    </div>`).join('')}
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:12px 14px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;font-weight:500">สถานะ มคอ. รายวิชา</span>
+      <button class="btn btn-sm btn-blue" onclick="sendPrompt('สรุปสถานะการส่ง มคอ. 3 และ มคอ. 5 ของรายวิชาทั้งหมดในหลักสูตรพยาบาลศาสตร์ ↗')">สร้างรายงานสถานะ ↗</button>
+    </div>
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>รหัสวิชา</th><th>ชื่อวิชา</th><th>ปี/ภาค</th><th>อาจารย์</th><th>มคอ.3</th><th>มคอ.5</th><th>การดำเนินการ</th></tr></thead>
+      <tbody>${SUBJ.map(s=>{
+        const dn=isDone(s.no);
+        return`<tr>
+          <td style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">${s.code}</td>
+          <td style="font-size:12px">${s.name}</td>
+          <td>${yrBadge(s.yr)} <span style="font-size:10px;color:var(--color-text-secondary)">ภ${s.sem}</span></td>
+          <td style="font-size:11px;color:var(--color-text-secondary)">${s.ins}</td>
+          <td>${dn?`<span class="mco-badge" style="background:#E1F5EE;color:#085041">พร้อมส่ง</span>`:`<span class="mco-badge" style="background:#FAEEDA;color:#633806">รอข้อมูล</span>`}</td>
+          <td><span class="mco-badge" style="background:#EEEDFE;color:#3C3489">รอส่ง</span></td>
+          <td style="white-space:nowrap">
+            ${dn?`<button class="btn btn-sm btn-blue" onclick="sendPrompt('สร้างเนื้อหา มคอ.3 สำหรับวิชา ${s.name} (${s.code}) ↗')">ร่าง มคอ.3 ↗</button>`:`<button class="btn btn-sm" onclick="goEdit(${s.no})">กรอกข้อมูล</button>`}
+          </td></tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function renderReport(){
+  const done=SUBJ.filter(s=>isDone(s.no)).length;
+  const total=SUBJ.length;
+  const pct=Math.round(done/total*100);
+  const ploTot=Array(10).fill(0);
+  Object.values(recs).forEach(r=>r.rows.forEach(row=>row.plo.forEach((p,i)=>ploTot[i]+=parseFloat(p.pct)||0)));
+  const topPlo=[...ploTot.map((v,i)=>({i,v}))].sort((a,b)=>b.v-a.v).slice(0,3);
+  const lowPlo=[...ploTot.map((v,i)=>({i,v}))].sort((a,b)=>a.v-b.v).slice(0,3);
+  const methodCount={};
+  Object.values(recs).forEach(r=>r.rows.forEach(row=>{if(row.method){const k=row.method.substring(0,40);methodCount[k]=(methodCount[k]||0)+1;}}));
+  const topMethod=Object.entries(methodCount).sort((a,b)=>b[1]-a[1])[0];
+  return`
+  <div style="background:#E6F1FB;border-radius:var(--border-radius-lg);padding:16px 20px;margin-bottom:16px;border-left:4px solid #185FA5">
+    <div style="font-size:10px;color:#185FA5;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">บทสรุปผู้บริหาร</div>
+    <div style="font-size:16px;font-weight:500;color:#042C53;margin-bottom:6px">การออกแบบการจัดการเรียนการสอน ปีการศึกษา 2569</div>
+    <div style="font-size:12px;color:#185FA5">วิทยาลัยพยาบาล — จัดทำเมื่อ ${new Date().toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})}</div>
+  </div>
+  <div class="grid4" style="margin-bottom:16px">
+    ${[['ความคืบหน้าการกรอกข้อมูล',pct+'%','#185FA5','#E6F1FB','#0C447C'],['รายวิชาที่กรอกแล้ว',done+'/'+total,'#1D9E75','#E1F5EE','#085041'],['วิชาที่รอดำเนินการ',(total-done)+' วิชา','#BA7517','#FAEEDA','#633806'],['PLO ที่ครอบคลุมสูงสุด','PLO'+(topPlo[0].i+1),'#534AB7','#EEEDFE','#3C3489']].map(([l,v,c,bg,tc])=>`
+    <div style="background:${bg};border-radius:var(--border-radius-md);padding:14px 16px;border-top:3px solid ${c}">
+      <div style="font-size:10px;color:${c};text-transform:uppercase;letter-spacing:.5px;font-weight:500;margin-bottom:4px">${l}</div>
+      <div style="font-size:22px;font-weight:500;color:${tc}">${v}</div>
+    </div>`).join('')}
+  </div>
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card">
+      <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">PLO ที่ครอบคลุมสูงสุด 3 อันดับ</div>
+      ${topPlo.map((x,rank)=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:22px;height:22px;border-radius:50%;background:${PCL[x.i]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:${PC[x.i]}">${rank+1}</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:500;color:${PC[x.i]}">PLO${x.i+1}</div>
+          <div class="pbar-wrap"><div class="pbar-fill" style="width:${Math.round(x.v/Math.max(...ploTot,1)*100)}%;background:${PC[x.i]}"></div></div>
+        </div>
+        <span style="font-size:12px;font-weight:500;color:${PC[x.i]}">${Math.round(x.v)}</span>
+      </div>`).join('')}
+      <div style="margin-top:12px;border-top:0.5px solid var(--color-border-tertiary);padding-top:10px">
+        <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">PLO ที่ต้องเสริม</div>
+        ${lowPlo.filter(x=>x.v===0).map(x=>`<span class="badge b-amber" style="margin-right:4px;margin-bottom:4px">PLO${x.i+1} ยังไม่ครอบคลุม</span>`).join('')}
+        ${lowPlo.filter(x=>x.v===0).length===0?'<span style="font-size:12px;color:var(--color-text-secondary)">PLO ครอบคลุมครบทุกด้าน</span>':''}
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">สรุปการดำเนินงาน</div>
+      ${[
+        ['รายวิชาทั้งหมดในหลักสูตร',total+' วิชา','#185FA5','#E6F1FB'],
+        ['กรอกข้อมูลการออกแบบแล้ว',done+' วิชา','#1D9E75','#E1F5EE'],
+        ['ความสมบูรณ์ของข้อมูล',pct+'%','#534AB7','#EEEDFE'],
+        ['ชั้นปีที่มีข้อมูลครบที่สุด','ปี 1','#BA7517','#FAEEDA'],
+        ['วิธีสอนที่ใช้มากที่สุด',topMethod?topMethod[0].substring(0,25):'ยังไม่มีข้อมูล','#1D9E75','#E1F5EE'],
+      ].map(([l,v,c,bg])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary)">
+        <span style="font-size:12px;color:var(--color-text-secondary)">${l}</span>
+        <span class="badge" style="background:${bg};color:${c};font-size:11px">${v}</span>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">ความคืบหน้าแยกตามชั้นปี</div>
+    ${[1,2,3,4].map(yr=>{
+      const tot=SUBJ.filter(s=>s.yr===yr).length;
+      const dn=SUBJ.filter(s=>s.yr===yr&&isDone(s.no)).length;
+      const p2=tot?Math.round(dn/tot*100):0;
+      return`<div style="display:grid;grid-template-columns:56px 1fr 80px 50px;align-items:center;gap:10px;margin-bottom:8px">
+        ${yrBadge(yr)}
+        <div class="pbar-wrap"><div class="pbar-fill" style="width:${p2}%;background:${YR_C[yr-1]}"></div></div>
+        <span style="font-size:12px;color:var(--color-text-secondary)">${dn}/${tot} วิชา</span>
+        <span style="font-size:12px;font-weight:500;color:${YR_C[yr-1]};text-align:right">${p2}%</span>
+      </div>`;
+    }).join('')}
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn btn-blue" onclick="sendPrompt('สร้างบทสรุปผู้บริหารฉบับสมบูรณ์สำหรับการออกแบบการจัดการเรียนการสอนหลักสูตรพยาบาลศาสตร์ ปีการศึกษา 2569 พร้อมข้อเสนอแนะ ↗')">สร้างรายงานฉบับสมบูรณ์ ↗</button>
+    <button class="btn" onclick="sendPrompt('วิเคราะห์ช่องว่างของ PLO และให้คำแนะนำการปรับปรุงหลักสูตร ↗')">วิเคราะห์ช่องว่าง PLO ↗</button>
+    <button class="btn" onclick="sendPrompt('สรุปผลการดำเนินงานและข้อเสนอแนะสำหรับปีการศึกษาถัดไป ↗')">ข้อเสนอแนะปีถัดไป ↗</button>
+  </div>`;
+}
+
+function attachCharts(){}
+
+function setQ(v){fQ=v;render();}
+function setFY(v){fY=v;render();}
+function setFS(v){fS=v;render();}
+function setFSt(v){fSt=v;render();}
+function addRow(){formRows.push(newRow());render();}
+function rmRow(i){formRows.splice(i,1);render();}
+function upd(i,f,v){formRows[i][f]=v;render();}
+function updPLO(ri,pi,f,v){formRows[ri].plo[pi][f]=v;render();}
+
+async function saveForm(){
+  recs[editNo]={rows:JSON.parse(JSON.stringify(formRows)),savedAt:new Date().toISOString()};
+  await persist();
+  const t=document.createElement('div');
+  t.style.cssText='background:#E1F5EE;color:#085041;border:0.5px solid #9FE1CB;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:500;margin-bottom:12px';
+  t.textContent='บันทึกข้อมูลเรียบร้อยแล้ว';
+  document.getElementById('app').insertBefore(t,document.getElementById('app').firstChild.nextSibling);
+  setTimeout(()=>t.remove(),2500);
+  render();
+}
+
+async function saveNew(){
+  const g=id=>document.getElementById(id)?.value||'';
+  const no=SUBJ.length>0?Math.max(...SUBJ.map(s=>s.no))+1:100;
+  const ns={no,yr:parseInt(g('nf_yr'))||1,sem:parseInt(g('nf_sem'))||1,code:g('nf_code'),name:g('nf_name'),cred:g('nf_cred'),ins:g('nf_ins'),tb:parseFloat(g('nf_tb'))||0,tl:parseFloat(g('nf_tl'))||0,p:parseFloat(g('nf_p'))||0,ss:parseFloat(g('nf_ss'))||0};
+  if(!ns.code||!ns.name){alert('กรุณากรอกรหัสวิชาและชื่อวิชา');return;}
+  SUBJ.push(ns);
+  addMode=false;
+  render();
+}
+
+async function del(no){
+  if(!confirm('ต้องการลบข้อมูลของวิชานี้?'))return;
+  delete recs[no];
+  await persist();
+  render();
+}
+
+init();
+</script>
